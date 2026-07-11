@@ -1,0 +1,19 @@
+# 1. Quality Control
+fastqc input_data.fastq
+
+# 2. Trimming
+java -jar trimmomatic.jar SE input.fastq output_trimmed.fastq ILLUMINACLIP:adapters.fa:2:30:10 SLIDINGWINDOW:4:20
+
+# 3. Post-Trimming QC
+fastqc output_trimmed.fastq
+
+# 4. Alignment
+bwa index reference_genome.fna
+bwa mem reference_genome.fna output_trimmed.fastq > alignment.sam
+samtools view -bS alignment.sam > alignment.bam
+samtools sort alignment.bam -o sorted.bam
+samtools index sorted.bam
+
+# 5. Variant Calling
+bcftools mpileup -f reference_genome.fna sorted.bam > my_variants.vcf
+bcftools call -mv -Ob -o my_variants.bcf my_variants.vcf
